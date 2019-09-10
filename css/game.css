@@ -1,0 +1,4 @@
+body          {background: silver}
+#myTBL     {background: white; color: black; width: 340px; height: 340px;}
+#myTBL td      {width: 20px; height: 20px;}
+#myTBL td.act {background: black; color: white}
