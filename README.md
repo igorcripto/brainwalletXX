@@ -14,3 +14,4 @@ Notable features
 * Signing and verifying messages with bitcoin address
 * Litecoin support
 
+Add Tab Game with visualisator privat key.
