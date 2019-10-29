@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en" xml:lang="en" xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Brainwallet - JavaScript Client-Side Bitcoin Address Generator</title>
+    <meta content="Client-side Bitcoin address and deterministic wallets generator, Base58 converter, transaction builder, signing and verifying messages with Bitcoin address" name="description" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <meta content="bitcoin address generator" name="description" />
+    <meta content="brainwallet" name="author" />
+    <link href="css/bootstrap.min.css" rel="stylesheet" />
+    <link href="css/brainwallet.css" rel="stylesheet" />
+    <link href="css/game.css" rel="stylesheet" />
+    <script src="js/jquery.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/bitcoinjs-min.js"></script>
+    <script src="js/qrcode.js"></script>
+    <script src="js/rfc1751.js"></script>
+    <script src="js/mnemonic.js"></script>
+    <script src="js/armory.js"></script>
+    <script src="js/electrum.js"></script>
+    <script src="js/tx.js"></script>
+    <script src="js/bitcoinsig.js"></script>
+    <script src="js/secure-random.js"></script>
+    <script src="js/asn1.js"></script>
+    <script src="js/brainwallet.js"></script>
+    <script src="js/game.js"></script>
+  </head>
+  <body onclick="rng_seed_time();" onkeypress="rng_seed_time();">
+    <header class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button class="navbar-toggle" data-target=".bs-navbar-collapse" data-toggle="collapse" type="button"><span class="sr-only">Toggle navigation</span> <span class="icon-bar">&nbsp;</span> <span class="icon-bar">&nbsp;</span> <span class="icon-bar">&nbsp;</span></button> <a class="navbar-brand" href="/">Brainwallet</a>
+        </div>
+        <nav class="collapse navbar-collapse bs-navbar-collapse">
+          <ul class="nav navbar-nav navbar-left">
+            <li><a href="https://bitcointalk.org/index.php?topic=1148611.0" target="_blank" style="font-weight:bold;font-size:12pt;">Important Security Update!</a></li>
+            <li class="active"><a data-toggle="tab" href="#generator" id="tab-gen">Generator</a></li>
+            <li><a data-toggle="tab" href="#chains" id="tab-chains">Chains</a></li>
+            <li><a data-toggle="tab" href="#tx" id="tab-tx">Transactions</a></li>
+            <li><a data-toggle="tab" href="#converter" id="tab-converter">Converter</a></li>
+            <li><a data-toggle="tab" href="#sign" id="tab-sign">Sign</a></li>
+            <li><a data-toggle="tab" href="#verify" id="tab-verify">Verify</a></li>
+            <li><a data-toggle="tab" href="#game" id="tab-verify">Game</a></li>
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+            <li class="dropdown" id="crCurrency">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="crSelect"><span id="crName">BTC</span>&nbsp;<b class="caret">&nbsp;</b></a>
+              <ul class="dropdown-menu dropdown-menu-two-column">
+                <!-- data target is "address_version,privatekey_version (optional)", privatekey_version is address_version+128 by default -->
+                <li><a data-target="0x00" href="http://blockchain.info"><span class="pull-right">BTC</span>Bitcoin</a></li>
+                <li><a data-target="0x17" href="https://chainz.cryptoid.info/arch/address.dws"><span class="pull-right">ARCH</span>Archcoin</a></li>
+                <li><a data-target="0x55" href="http://bitmark.co:3000"><span class="pull-right">BTM</span>Bitmark</a></li>
+                <li><a data-target="0x19" href="http://blackco.in"><span class="pull-right">BC</span>Blackcoin</a></li>
+                <li><a data-target="0x3C" href="http://explorebtcd.info:3000"><span class="pull-right">BTCD</span>BitcoinDark</a></li>
+                <li><a data-target="0x0B" href="http://explorer.cryptogenicbullion.org:2750"><span class="pull-right">CGB</span>Cryptogenic</a></li>
+                <li><a data-target="0x89,0x85" href="http://khashier.com"><span class="pull-right">CLAM</span>ClamCoin</a></li>
+                <li><a data-target="0x1E" href="http://www.chainbrowser.com/datacoin"><span class="pull-right">DTC</span>Datacoin</a></li>
+                <li><a data-target="0x00" href="http://d.evco.in/abe"><span class="pull-right">DVC</span>Devcoin</a></li>
+                <li><a data-target="0x1E" href="http://dgc.cryptocoinexplorer.com"><span class="pull-right">DGC</span>Digitalcoin</a></li>
+                <li><a data-target="0x1E" href="http://dogechain.info"><span class="pull-right">DOGE</span>Dogecoin</a></li>
+                <li><a data-target="0x0E" href="http://ftc.cryptocoinexplorer.com"><span class="pull-right">FTC</span>Feathercoin</a></li>
+                <li><a data-target="0x26" href="http://gmc.cryptocloudhosting.org:3001"><span class="pull-right">GMC</span>GameCredits</a></li>
+                <li><a data-target="0x66" href="http://exploretheblocks.com:2750"><span class="pull-right">IFC</span>Infinitecoin</a></li>
+                <li><a data-target="0x8A" href="http://d.evco.in/abe"><span class="pull-right">IXC</span>Ixcoin</a></li>
+                <li><a data-target="0x30" href="http://explorer.litecoin.net"><span class="pull-right">LTC</span>Litecoin</a></li>
+                <li><a data-target="0x32" href="http://explore.marscoin.org"><span class="pull-right">MRS</span>Marscoin</a></li>
+                <li><a data-target="0x32" href="http://www.chainbrowser.com/memorycoin"><span class="pull-right">MMC</span>Memorycoin</a></li>
+                <li><a data-target="0x32" href="https://coinplorer.com/MEC"><span class="pull-right">MEC</span>Megacoin</a></li>
+                <li><a data-target="0x33" href="http://localhost"><span class="pull-right">MINT</span>MintCoin</a></li>
+                <li><a data-target="0x34" href="http://explorer.dot-bit.org"><span class="pull-right">NMC</span>Namecoin</a></li>
+                <li><a data-target="0x08" href="http://nvc.cryptocoinexplorer.com"><span class="pull-right">NVC</span>Novacoin</a></li>
+                <li><a data-target="0x37" href="http://ppc.cryptocoinexplorer.com"><span class="pull-right">PPC</span>Peercoin</a></li>
+                <li><a data-target="0x37" href="http://localhost"><span class="pull-right">PAC</span>PandaCoin</a></li>
+                <li><a data-target="0x17" href="http://primecoin.org"><span class="pull-right">XPM</span>Primecoin</a></li>
+                <li><a data-target="0x38" href="http://btsblock.com"><span class="pull-right">PTS</span>Protoshares</a></li>
+                <li><a data-target="0x3A" href="http://quarkexplorer.com"><span class="pull-right">QRK</span>Quarkcoin</a></li>
+                <li><a data-target="0x3D" href="http://live.reddcoin.com"><span class="pull-right">RDD</span>Reddcoin</a></li>
+                <li><a data-target="0x3F" href="http://explorer.shadow.cash/"><span class="pull-right">SDC</span>ShadowCash</a></li>
+                <li><a data-target="0x00" href="http://trc.cryptocoinexplorer.com"><span class="pull-right">TRC</span>Terracoin</a></li>
+                <li><a data-target="0x30" href="http://tacochain.info"><span class="pull-right">TC0</span>Tacocoin</a></li>
+                <li><a data-target="0x6F" href="http://blockexplorer.com/testnet"><span class="pull-right">TEST</span>Testnet</a></li>
+                <li><a data-target="0x47" href="http://explorer.vertcoin.org"><span class="pull-right">VTC</span>Vertcoin</a></li>
+                <li><a data-target="0x49" href="http://wdc.cryptocoinexplorer.com"><span class="pull-right">WDC</span>Worldcoin</a></li>
+                <li><a data-target="0x50" href="http://bit.usr.sh:2750"><span class="pull-right">ZET</span>Zetacoin</a></li>
+              </ul></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+    <div class="container">
+      <div class="tab-content">
+        <!-- Generator -->
+        <div class="tab-pane fade in active" id="generator">
+          <form action="/" class="form-horizontal" method="get">
+            <fieldset>
+              <legend>Generator</legend>
+              <div class="form-group">
+                <label class="col-lg-2 control-label" for="from_pass">Get Address From</label>
+                <div class="col-lg-10 controls">
+                  <div class="btn-group" data-toggle="buttons" id="gen_from">
+                    <label class="btn btn-default active" title="Single SHA256"><input id="from_pass" name="gen_from" type="radio" checked/>Passphrase</label>
+                    <label class="btn btn-default" title="Hex-encoded"><input id="from_hash" name="gen_from" type="radio" />Secret Exponent</label>
+                    <label class="btn btn-default" title="Base58-encoded"><input id="from_sec" name="gen_from" type="radio" />Private Key</label>
+                    <label class="btn btn-default" title="DER-encoded"><input id="from_der" name="gen_from" type="radio" />ASN.1 Key</label>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-lg-2 control-label" for="pass">Passphrase</label>
+                <div class="col-lg-10 controls">
+                  <div class="input-group">
+                    <input class="form-control" id="pass" placeholder="Long sentence that does not appear in songs or literature. SHA256 used as private key. Should not be empty!" type="password" autofocus/>
+                    <span class="input-group-btn">
+                      <button id="togglePass" class="btn btn-info" type="button">Toggle</button>
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-lg-2 control-label" for="hash">Secret Exponent</label>
+                <div class="col-lg-10 controls">
+                  <!-- div class="input-group">
+                    <input class="form-control" id="hash" maxlength="64" readonly="readonly" type="text" spellcheck="false" title="SHA256(Passphrase), 256-bit ECDSA private key" type="text"/>
+                    <div class="input-group-btn">
+                      <button class="btn btn-default" id="genRandom" title="Uses cryptographically-strong window.crypto. Disabled on unsupported browsers." type="button" disabled="disabled">Secure Random</button>
+                    </div>
+                  </div -->
+                  <input class="form-control" id="hash" maxlength="64" readonly="readonly" type="text" spellcheck="false" title="SHA256(Passphrase), 256-bit ECDSA private key" type="text"/>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-lg-2 control-label">Point Conversion</label>
+                <div class="col-lg-10 controls">
+                  <div class="btn-group" data-toggle="buttons" id="gen_comp">
+                    <label class="btn btn-default active" title="Uncompressed keys (reference client)"><input name="uncompressed" type="radio" />Uncompressed</label> <label class="btn btn-default" title="Compressed keys (introduced in 0.5.99)"><input name="compressed" type="radio" />Compressed</label>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group" style="display:none">
+                <label class="col-lg-2 control-label" for="sec">Private Key</label>
+                <div class="col-lg-10 controls">
+                  <input class="form-control" id="sec" readonly="readonly" spellcheck="false" title="Wallet Import Format (Base58Check of Secret Exponent)" type="text" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-lg-2 control-label" for="addr">Address</label>
+                <div class="col-lg-10 controls">
+                  <input class="form-control" id="addr" readonly="readonly" title="Bitcoin Address (Base58Check of HASH160)" type="text" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-lg-2 control-label" for="genAddrQR">Address QR Code</label>
+                <div class="col-lg-4 controls">
+                  <a href="#" id="genAddrURL" target="_blank" title="Click to view address history (external link)"><span id="genAddrQR"></span></a>
+                  <span id='toggleKeyCode' class='btn btn-default'>Toggle Key</span>
+                </div>
+                <div class="col-lg-3 controls">
+                  <span id="genKeyQR" style="display:none"></span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-lg-2 control-label" for="der">ASN.1 Key</label>
+                <div class="col-lg-10 controls">
+                  <textarea class="form-control" id="der" readonly="readonly" rows="5" title="ASN.1 DER-encoded ECDSA private key (OpenSSL)"></textarea>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-lg-2 control-label" for="pub">Public Key</label>
+                <div class="col-lg-10 controls">
+                  <textarea class="form-control" id="pub" readonly="readonly" rows="2" title="SEC1-encoded ECDSA public key (OpenSSL)"></textarea>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-lg-2 control-label" for="h160">HASH160</label>
+                <div class="col-lg-10 controls">
+                  <input class="form-control" id="h160" readonly="readonly" title="Hex-encoded address, RIPEMD160(SHA256(Public Key))" type="text" />
+                </div>
+              </div>
+            </fieldset>
+          </form>
+        </div><!-- Chains -->
+        <div class="tab-pane fade" id="chains">
+          <form action="/" class="form-horizontal" method="get">
+            <fieldset>
+              <legend>Chains</legend>
+              <div class="form-group">
+                <label class="col-lg-2 control-label" for="chType">Generation Method</label>
+                <div class="col-lg-10 controls">
+                  <div class="btn-group" data-toggle="buttons" id="chType">
+                    <label class="btn btn-default active"><input id="armory" name="chType" type="radio" />Armory</label> <label class="btn btn-default"><input id="electrum" name="chType" type="radio" />Electrum</label>
+                  </div>&nbsp;&nbsp;<span class="help-inline" id="chMsg">&nbsp;</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-lg-2 control-label" for="chRoot">Root Key</label>
+                <div class="col-lg-10 controls">
+                  <div class="input-group">
+                    <input class="form-control" id="chRoot" maxlength="32" readonly="readonly" type="text" />
+                    <div class="input-group-btn">
+                      <button class="btn btn-default" id="chRandom" title="Uses cryptographically-strong window.crypto. Disabled on unsupported browsers." type="button" disabled="disabled">Secure Random</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-lg-2 control-label" for="chCode">Chain Code</label>
+                <div class="col-lg-10 controls">
+                  <input class="form-control" id="chCode" maxlength="64" readonly="readonly" type="text" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-lg-2 control-label" for="chBackup">Paper Backup</label>
+                <div class="col-lg-10 controls">
+                  <textarea class="form-control" id="chBackup" rows="4" spellcheck="false"></textarea>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-lg-2 control-label" for="chRange">Primary Addresses</label>
+                <div class="col-lg-10 controls">
+                  <input class="form-control" id="chRange" maxlength="3" type="text" value="10" />
+                </div>
+              </div>
+              <div class="form-group" title="Electrum specific, added to the end of the list">
+                <label class="col-lg-2 control-label" for="chChange">Change Addresses</label>
+                <div class="col-lg-10 controls">
+                  <input class="form-control" disabled="disabled" id="chChange" maxlength="3" type="text" value="1" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-lg-2 control-label" for="chFormat">Wallet Format</label>
+                <div class="col-lg-10 controls">
+                  <div class="btn-group" data-toggle="buttons" id="chFormat">
+                    <label class="btn btn-default active"><input id="csv" type="radio" />CSV</label> <label class="btn btn-default"><input id="json" type="radio" />JSON</label>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-lg-2 control-label" for="chList">Chain</label>
+                <div class="col-lg-10 controls">
+                  <textarea class="form-control" id="chList" readonly="readonly" rows="13"></textarea>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+        </div><!-- Transactions -->
+        <div class="tab-pane fade" id="tx">
+          <form action="/" class="form-horizontal" method="get">
+            <fieldset>
+              <legend>Transactions</legend>
+              <div class="form-group">
+                <label class="col-lg-2 control-label" for="txFrom">Build Transaction From</label>
+                <div class="col-lg-10 controls">
+                  <div class="btn-group" data-toggle="buttons" id="txFrom">
+                    <label class="btn btn-default active"><input id="txFromSec" name="txFrom" type="radio" />Private Key</label> <label class="btn btn-default"><input id="txFromJSON" name="txFrom" type="radio" />JSON Transaction</label> <label class="btn btn-default"><input id="txFromRaw" name="txFrom" type="radio" />Raw Transaction</label>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-lg-2 control-label" for="txSec">Private Key</label>
+                <div class="col-lg-10 controls">
+                  <input class="form-control" id="txSec" spellcheck="false" type="text" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-lg-2 control-label" for="txAddr">Source Address</label>
+                <div class="col-lg-10 controls">
+                  <div class="row">
+                    <div class="col-xs-6">
+                      <input class="form-control" id="txAddr" spellcheck="false" type="text" />
+                    </div>
+                    <div class="col-xs-3">
+                      <span class="input-group"><span class="input-group-addon">BTC</span> <input class="form-control" id="txBalance" placeholder="0.00" readonly="readonly" type="text" /></span>
+                    </div>
+                    <div class="col-xs-2">
+                      <button class="btn btn-default" data-target="#txUnspentForm" data-toggle="collapse" id="txToggle" type="button">Edit History</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="collapse" id="txUnspentForm">
+                <div class="form-group">
+                  <label class="col-lg-2 control-label" for="txBBE">Use History From</label>
+                  <div class="col-lg-10 controls">
+                    <div class="btn-group" data-toggle="buttons" id="txType">
+                      <label class="btn btn-default active"><input id="txBCI" name="txType" type="radio" />BlockChain Info</label> <label class="btn btn-default"><input id="txBBE" name="txType" type="radio" />Bitcoin Block Explorer</label>
+                    </div>&nbsp;<button class="btn btn-default help-inline" id="txGetUnspent" type="button">Download</button>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="col-lg-2 control-label" for="txUnspent">Transaction History</label>
+                  <div class="col-lg-10 controls">
+                    <textarea class="form-control" id="txUnspent" rows="16"></textarea>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group txCC">
+                <label class="col-lg-2 control-label" for="txDest">Destination Address</label>
+                <div class="col-lg-10 controls">
+                  <div class="row">
+                    <div class="col-xs-6">
+                      <input autocomplete="off" class="form-control txDest" spellcheck="false" id="txDest" type="text" />
+                    </div>
+                    <div class="col-xs-3">
+                      <span class="input-group"><span class="input-group-addon">BTC</span> <input class="form-control" id="txValue" placeholder="0.00" type="text" /></span>
+                    </div>
+                    <div class="col-xs-3 help-inline">
+                      <button class="btn btn-default" id="txAddDest" type="button">+</button>&nbsp;<button class="btn btn-default" disabled="disabled" id="txRemoveDest" type="button">–</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-lg-2 control-label" for="txJSON">JSON Transaction</label>
+                <div class="col-lg-10 controls">
+                  <textarea class="form-control" id="txJSON" readonly="readonly" rows="12" spellcheck="false"></textarea>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-lg-2 control-label" for="txHex">Raw Transaction</label>
+                <div class="col-lg-10 controls">
+                  <textarea class="form-control" id="txHex" readonly="readonly" rows="5"></textarea>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-lg-2 control-label" for="txFee">Fee</label>
+                <div class="col-lg-10 controls">
+                  <div class="input-group">
+                    <span class="input-group-addon">BTC</span> <input class="form-control" id="txFee" type="text" value="0.0001" />
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="col-lg-offset-2 col-lg-10 controls">
+                  <div class="input-group">
+                    <button class="btn btn-default" id="txSign" title="Signatures require a random number which means signing the same data twice results in different sigs" type="button">Re-sign</button> &nbsp;<button class="btn btn-default" id="txSend" type="button">Send Transaction</button>
+                  </div>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+        </div><!-- Converter -->
+        <div class="tab-pane fade" id="converter">
+          <form action="/" class="form-horizontal" method="get">
+            <fieldset>
+              <legend>Converter</legend>
+              <div class="form-group">
+                <label class="col-lg-2 control-label" for="enc_from">Source Encoding</label>
+                <div class="col-lg-10 controls">
+                  <div class="btn-group" data-toggle="buttons" id="enc_from">
+                    <label class="btn btn-default"><input id="from_hex" name="enc_from" type="radio" />Hex</label> <label class="btn btn-default"><input id="from_text" name="enc_from" type="radio" />Text</label> <label class="btn btn-default"><input id="from_bin" name="enc_from" type="radio" />Bin</label> <label class="btn btn-default"><input id="from_dec" name="enc_from" type="radio" />Dec</label> <label class="btn btn-default"><input id="from_base58" name="enc_from" type="radio" />Base58</label> <label class="btn btn-default"><input id="from_base58check" name="enc_from" type="radio" />B58Check</label> <label class="btn btn-default"><input id="from_base64" name="enc_from" type="radio" />Base64</label> <label class="btn btn-default"><input id="from_rfc1751" name="enc_from" type="radio" />Rfc1751</label> <label class="btn btn-default"><input id="from_mnemonic" name="enc_from" type="radio" />Poetry</label> <label class="btn btn-default"><input id="from_rot13" name="enc_from" type="radio" />Rot13</label> <label class="btn btn-default"><input id="from_easy16" name="enc_from" type="radio" />Easy16</label>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-lg-2 control-label" for="enc_from">Source Text</label>
+                <div class="col-lg-10 controls">
+                  <textarea class="form-control" id="src" rows="8" spellcheck="false"></textarea>
+                  <div>
+                    <span id="hint_from">&nbsp;</span>&nbsp;
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-lg-2 control-label" for="enc_from">Convert To</label>
+                <div class="col-lg-10 controls">
+                  <div class="btn-group" data-toggle="buttons" id="enc_to">
+                    <label class="btn btn-default active"><input id="to_hex" name="enc_to" type="radio" />Hex</label> <label class="btn btn-default"><input id="to_text" name="enc_to" type="radio" />Text</label> <label class="btn btn-default"><input id="to_bin" name="enc_from" type="radio" />Bin</label><label class="btn btn-default"><input id="to_dec" name="enc_from" type="radio" />Dec</label> <label class="btn btn-default"><input id="to_base58" name="enc_to" type="radio" />Base58</label> <label class="btn btn-default"><input id="to_base58check" name="enc_to" type="radio" />B58Check</label> <label class="btn btn-default"><input id="to_base64" name="enc_to" type="radio" />Base64</label> <label class="btn btn-default"><input id="to_rfc1751" name="enc_to" type="radio" />Rfc1751</label> <label class="btn btn-default"><input id="to_mnemonic" name="enc_to" type="radio" />Poetry</label> <label class="btn btn-default"><input id="to_rot13" name="enc_to" type="radio" />Rot13</label> <label class="btn btn-default"><input id="to_easy16" name="enc_from" type="radio" />Easy16</label>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-lg-2 control-label" for="enc_from">Result</label>
+                <div class="col-lg-10 controls">
+                  <textarea class="form-control" id="dest" readonly="readonly" rows="8"></textarea>
+                  <div>
+                    <span id="hint_to">&nbsp;</span>&nbsp;
+                  </div>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+        </div><!-- Sign -->
+        <div class="tab-pane fade" id="sign">
+          <form action="/" class="form-horizontal" id="sgForm" method="get" name="sgForm">
+            <fieldset>
+              <legend>Sign Message</legend>
+              <div class="form-group">
+                <label class="col-lg-2 control-label" for="sgSec">Private Key</label>
+                <div class="col-lg-10 controls">
+                  <input class="form-control" id="sgSec" spellcheck="false" type="text" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-lg-2 control-label" for="sgAddr">Address</label>
+                <div class="col-lg-10 controls">
+                  <input class="form-control" id="sgAddr" readonly="readonly" type="text" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-lg-2 control-label" for="sgMsg">Message</label>
+                <div class="col-lg-10 controls">
+                  <textarea class="form-control" id="sgMsg" rows="5" spellcheck="false"></textarea>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-lg-2 control-label" for="sgType">Signature Type</label>
+                <div class="col-lg-10 controls">
+                  <div class="btn-group" data-toggle="buttons" id="sgType">
+                    <label class="btn btn-default active" title="Introduced by inputs.io, see https://inputs.io/clearsign"><input name="sgType" value="inputs_io" type="radio" checked/>Inputs.IO</label>
+                    <label class="btn btn-default" title="Introduced in Multibit release notes"><input name="sgType" value="multibit" type="radio" />Multibit</label>
+                    <label class="btn btn-default" title="Introduced in Bitcoin Armory 0.90"><input name="sgType" value="armory_base64" type="radio" />Armory Base64</label>
+                    <label class="btn btn-default" title="Introduced in Bitcoin Armory 0.90"><input name="sgType" value="armory_clearsign" type="radio" />Armory Clearsign</label>
+                    <label class="btn btn-default" title="Introduced in Bitcoin Armory 0.88"><input name="sgType" value="armory_hex" type="radio" />Armory Hex</label>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-lg-2 control-label" for="sgSig">Signed Message</label>
+                <div class="col-lg-10 controls">
+                  <textarea class="form-control" id="sgSig" readonly="readonly" rows="10" spellcheck="false"></textarea>
+                </div>
+              </div>
+              <div class="form-group">
+                <div class="col-lg-offset-2 col-lg-10 controls">
+                  <button class="btn btn-default" id="sgSign" title="Signatures require a random number which means signing the same data twice results in different sigs" type="button">Sign Message</button>
+                  &nbsp;&nbsp;<span class="help-inline" id="sgLabel"></span>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+        
+        
+        <!-- Verify -->
+        <div class="tab-pane fade" id="verify">
+          <form action="/" class="form-horizontal" id="vrForm" method="get" name="vrForm">
+            <fieldset>
+              <legend>Verify Message</legend>
+              <div class="hidden">
+                <div class="col-lg-offset-2 col-lg-10 alert alert-success fade in" id="vrSuccess">
+                  <button aria-hidden="true" class="close" data-dismiss="alert" type="button">&times;</button> Message verified to be from <span id="vrAddrLabel"></span>
+                </div>
+                <div class="col-lg-offset-2 col-lg-10 alert alert-danger fade in" id="vrError">
+                  <button aria-hidden="true" class="close" data-dismiss="alert" type="button">&times;</button> Message failed to verify!
+                </div>
+                <div class="col-lg-offset-2 col-lg-10 alert alert-warning fade in" id="vrWarning">
+                  <button aria-hidden="true" class="close" data-dismiss="alert" type="button">&times;</button> Message verified to be from <span id="vrAddrLabel"></span> (address wasn't specified)
+                </div>
+              </div>
+              <div id="vrAlert"></div>
+              <div class="form-group">
+                <label class="col-lg-2 control-label" for="vrFrom">Verify From</label>
+                <div class="col-lg-10 controls">
+                  <div class="btn-group" data-toggle="buttons" id="vrFrom">
+                    <label class="btn btn-default active" title="RFC2440-like"><input id="vrFromMessage" name="vrFrom" type="radio" checked/>Signed Message</label>
+                    <label class="btn btn-default"><input id="vrFromForm" name="vrFrom" type="radio" />Bitcoin-QT</label>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group vrAddr" hidden>
+                <label class="col-lg-2 control-label" for="vrAddr">Address</label>
+                <div class="col-lg-10 controls">
+                  <input class="form-control" id="vrAddr" type="text"/>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-lg-2 control-label" for="vrMsg">Message</label>
+                <div class="col-lg-10 controls">
+                  <textarea class="form-control" id="vrMsg" rows="14" spellcheck="false"></textarea>
+                </div>
+              </div>
+              <div class="form-group vrSig" hidden>
+                <label class="col-lg-2 control-label" for="vrSig">Signature</label>
+                <div class="col-lg-10 controls">
+                  <input class="form-control" id="vrSig" spellcheck="false" type="text"/>
+                </div>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+        
+        <!-- Game -->
+        <div class="tab-pane fade" id="game">
+          <form action="/" class="form-horizontal" id="gaForm" method="get" name="gaForm">
+            <fieldset>
+              <legend>Game Draw Privat Key by mrXtraf (mr.xtraf@gmail.com)</legend>
+              <script id="gaScriptLoad"></script>
+              <div id="gaAlert"></div>
+              <table style="vertical-align: top;"><tbody><tr><td>
+                <div class="form-group">
+                  Visual privat key (To change a bit, click at him)<br>
+                  <div class="col-lg-10 controls">
+                      <table id="myTBL" border="0" >
+                            <tr><th style="width: 20px; height: 20px;"> </th><th style="width: 20px; height: 20px;">0</th><th style="width: 20px; height: 20px;">1</th><th style="width: 20px; height: 20px;">2</th><th style="width: 20px; height: 20px;">3</th><th style="width: 20px; height: 20px;">4</th><th style="width: 20px; height: 20px;">5</th><th style="width: 20px; height: 20px;">6</th><th style="width: 20px; height: 20px;">7</th><th style="width: 20px; height: 20px;">8</th><th style="width: 20px; height: 20px;">9</th><th style="width: 20px; height: 20px;">A</th><th style="width: 20px; height: 20px;">B</th><th style="width: 20px; height: 20px;">C</th><th style="width: 20px; height: 20px;">D</th><th style="width: 20px; height: 20px;">E</th><th style="width: 20px; height: 20px;">F</th></tr><tr><th style="width: 20px; height: 20px;">0</th><td title="0-0" id="tdr[0][0]"></td><td title="1-0" id="tdr[1][0]"></td><td title="2-0" id="tdr[2][0]"></td><td title="3-0" id="tdr[3][0]"></td><td title="4-0" id="tdr[4][0]"></td><td title="5-0" id="tdr[5][0]"></td><td title="6-0" id="tdr[6][0]"></td><td title="7-0" id="tdr[7][0]"></td><td title="8-0" id="tdr[8][0]"></td><td title="9-0" id="tdr[9][0]"></td><td title="A-0" id="tdr[10][0]"></td><td title="B-0" id="tdr[11][0]"></td><td title="C-0" id="tdr[12][0]"></td><td title="D-0" id="tdr[13][0]"></td><td title="E-0" id="tdr[14][0]"></td><td title="F-0" id="tdr[15][0]"></td></tr><tr><th style="width: 20px; height: 20px;">1</th><td title="0-1" id="tdr[0][1]"></td><td title="1-1" id="tdr[1][1]"></td><td title="2-1" id="tdr[2][1]"></td><td title="3-1" id="tdr[3][1]"></td><td title="4-1" id="tdr[4][1]"></td><td title="5-1" id="tdr[5][1]"></td><td title="6-1" id="tdr[6][1]"></td><td title="7-1" id="tdr[7][1]"></td><td title="8-1" id="tdr[8][1]"></td><td title="9-1" id="tdr[9][1]"></td><td title="A-1" id="tdr[10][1]"></td><td title="B-1" id="tdr[11][1]"></td><td title="C-1" id="tdr[12][1]"></td><td title="D-1" id="tdr[13][1]"></td><td title="E-1" id="tdr[14][1]"></td><td title="F-1" id="tdr[15][1]"></td></tr><tr><th style="width: 20px; height: 20px;">2</th><td title="0-2" id="tdr[0][2]"></td><td title="1-2" id="tdr[1][2]"></td><td title="2-2" id="tdr[2][2]"></td><td title="3-2" id="tdr[3][2]"></td><td title="4-2" id="tdr[4][2]"></td><td title="5-2" id="tdr[5][2]"></td><td title="6-2" id="tdr[6][2]"></td><td title="7-2" id="tdr[7][2]"></td><td title="8-2" id="tdr[8][2]"></td><td title="9-2" id="tdr[9][2]"></td><td title="A-2" id="tdr[10][2]"></td><td title="B-2" id="tdr[11][2]"></td><td title="C-2" id="tdr[12][2]"></td><td title="D-2" id="tdr[13][2]"></td><td title="E-2" id="tdr[14][2]"></td><td title="F-2" id="tdr[15][2]"></td></tr><tr><th style="width: 20px; height: 20px;">3</th><td title="0-3" id="tdr[0][3]"></td><td title="1-3" id="tdr[1][3]"></td><td title="2-3" id="tdr[2][3]"></td><td title="3-3" id="tdr[3][3]"></td><td title="4-3" id="tdr[4][3]"></td><td title="5-3" id="tdr[5][3]"></td><td title="6-3" id="tdr[6][3]"></td><td title="7-3" id="tdr[7][3]"></td><td title="8-3" id="tdr[8][3]"></td><td title="9-3" id="tdr[9][3]"></td><td title="A-3" id="tdr[10][3]"></td><td title="B-3" id="tdr[11][3]"></td><td title="C-3" id="tdr[12][3]"></td><td title="D-3" id="tdr[13][3]"></td><td title="E-3" id="tdr[14][3]"></td><td title="F-3" id="tdr[15][3]"></td></tr><tr><th style="width: 20px; height: 20px;">4</th><td title="0-4" id="tdr[0][4]"></td><td title="1-4" id="tdr[1][4]"></td><td title="2-4" id="tdr[2][4]"></td><td title="3-4" id="tdr[3][4]"></td><td title="4-4" id="tdr[4][4]"></td><td title="5-4" id="tdr[5][4]"></td><td title="6-4" id="tdr[6][4]"></td><td title="7-4" id="tdr[7][4]"></td><td title="8-4" id="tdr[8][4]"></td><td title="9-4" id="tdr[9][4]"></td><td title="A-4" id="tdr[10][4]"></td><td title="B-4" id="tdr[11][4]"></td><td title="C-4" id="tdr[12][4]"></td><td title="D-4" id="tdr[13][4]"></td><td title="E-4" id="tdr[14][4]"></td><td title="F-4" id="tdr[15][4]"></td></tr><tr><th style="width: 20px; height: 20px;">5</th><td title="0-5" id="tdr[0][5]"></td><td title="1-5" id="tdr[1][5]
+"></td><td title="2-5" id="tdr[2][5]"></td><td title="3-5" id="tdr[3][5]"></td><td title="4-5" id="tdr[4][5]"></td><td title="5-5" id="tdr[5][5]"></td><td title="6-5" id="tdr[6][5]"></td><td title="7-5" id="tdr[7][5]"></td><td title="8-5" id="tdr[8][5]"></td><td title="9-5" id="tdr[9][5]"></td><td title="A-5" id="tdr[10][5]"></td><td title="B-5" id="tdr[11][5]"></td><td title="C-5" id="tdr[12][5]"></td><td title="D-5" id="tdr[13][5]"></td><td title="E-5" id="tdr[14][5]"></td><td title="F-5" id="tdr[15][5]"></td></tr><tr><th style="width: 20px; height: 20px;">6</th><td title="0-6" id="tdr[0][6]"></td><td title="1-6" id="tdr[1][6]"></td><td title="2-6" id="tdr[2][6]"></td><td title="3-6" id="tdr[3][6]"></td><td title="4-6" id="tdr[4][6]"></td><td title="5-6" id="tdr[5][6]"></td><td title="6-6" id="tdr[6][6]"></td><td title="7-6" id="tdr[7][6]"></td><td title="8-6" id="tdr[8][6]"></td><td title="9-6" id="tdr[9][6]"></td><td title="A-6" id="tdr[10][6]"></td><td title="B-6" id="tdr[11][6]"></td><td title="C-6" id="tdr[12][6]"></td><td title="D-6" id="tdr[13][6]"></td><td title="E-6" id="tdr[14][6]"></td><td title="F-6" id="tdr[15][6]"></td></tr><tr><th style="width: 20px; height: 20px;">7</th><td title="0-7" id="tdr[0][7]"></td><td title="1-7" id="tdr[1][7]"></td><td title="2-7" id="tdr[2][7]"></td><td title="3-7" id="tdr[3][7]"></td><td title="4-7" id="tdr[4][7]"></td><td title="5-7" id="tdr[5][7]"></td><td title="6-7" id="tdr[6][7]"></td><td title="7-7" id="tdr[7][7]"></td><td title="8-7" id="tdr[8][7]"></td><td title="9-7" id="tdr[9][7]"></td><td title="A-7" id="tdr[10][7]"></td><td title="B-7" id="tdr[11][7]"></td><td title="C-7" id="tdr[12][7]"></td><td title="D-7" id="tdr[13][7]"></td><td title="E-7" id="tdr[14][7]"></td><td title="F-7" id="tdr[15][7]"></td></tr><tr><th style="width: 20px; height: 20px;">8</th><td title="0-8" id="tdr[0][8]"></td><td title="1-8" id="tdr[1][8]"></td><td title="2-8" id="tdr[2][8]"></td><td title="3-8" id="tdr[3][8]"></td><td title="4-8" id="tdr[4][8]"></td><td title="5-8" id="tdr[5][8]"></td><td title="6-8" id="tdr[6][8]"></td><td title="7-8" id="tdr[7][8]"></td><td title="8-8" id="tdr[8][8]"></td><td title="9-8" id="tdr[9][8]"></td><td title="A-8" id="tdr[10][8]"></td><td title="B-8" id="tdr[11][8]"></td><td title="C-8" id="tdr[12][8]"></td><td title="D-8" id="tdr[13][8]"></td><td title="E-8" id="tdr[14][8]"></td><td title="F-8" id="tdr[15][8]"></td></tr><tr><th style="width: 20px; height: 20px;">9</th><td title="0-9" id="tdr[0][9]"></td><td title="1-9" id="tdr[1][9]"></td><td title="2-9" id="tdr[2][9]"></td><td title="3-9" id="tdr[3][9]"></td><td title="4-9" id="tdr[4][9]"></td><td title="5-9" id="tdr[5][9]"></td><td title="6-9" id="tdr[6][9]"></td><td title="7-9" id="tdr[7][9]"></td><td title="8-9" id="tdr[8][9]"></td><td title="9-9" id="tdr[9][9]"></td><td title="A-9" id="tdr[10][9]"></td><td title="B-9" id="tdr[11][9]"></td><td title="C-9" id="tdr[12][9]"></td><td title="D-9" id="tdr[13][9]"></td><td title="E-9" id="tdr[14][9]"></td><td title="F-9" id="tdr[15][9]"></td></tr><tr><th style="width: 20px; height: 20px;">A</th><td title="0-A" id="tdr[0][10]"></td><td title="1-A" id="tdr[1][10]"></td><td title="2-A" id="tdr[2][10]"></td><td title="3-A" id="tdr[3][10]"></td><td title="4-A" id="tdr[4][10]"></td><td title="5-A" id="tdr[5][10]"></td><td title="6-A" id="tdr[6][10]"></td><td title="7-A" id="tdr[7][10]"></td><td title="8-A" id="tdr[8][10]"></td><td title="9-A" id="tdr[9][10]"></td><td title="A-A" id="tdr[10][10]"></td><td title="B-A" id="tdr[11][10]"></td><td title="C-A" id="tdr[12][10]"></td><td title="D-A" id="tdr[13][10]"></td><td title="E-A" id="tdr[14][10]"></td><td title="F-A" id="tdr[15][10]"></td></tr><tr><th style="width: 20px; height: 20px;">B</th><td title="0-B" id="tdr[0][11]"></td><td title="1-B" id="tdr[1][11]"></td><td title="2-B" id="tdr[2][11]"></td><td title="3-B" id="tdr[3][11]"></td><td title="4-B" id="tdr[4][11]"></td><td title="5-B" id="tdr[5][11]"></td><td title="6-B" id="tdr[6][11]"></td><td title="7-B" id="tdr[7][11]"></td><td title="8-B" id="tdr[8][11]"
+></td><td title="9-B" id="tdr[9][11]"></td><td title="A-B" id="tdr[10][11]"></td><td title="B-B" id="tdr[11][11]"></td><td title="C-B" id="tdr[12][11]"></td><td title="D-B" id="tdr[13][11]"></td><td title="E-B" id="tdr[14][11]"></td><td title="F-B" id="tdr[15][11]"></td></tr><tr><th style="width: 20px; height: 20px;">C</th><td title="0-C" id="tdr[0][12]"></td><td title="1-C" id="tdr[1][12]"></td><td title="2-C" id="tdr[2][12]"></td><td title="3-C" id="tdr[3][12]"></td><td title="4-C" id="tdr[4][12]"></td><td title="5-C" id="tdr[5][12]"></td><td title="6-C" id="tdr[6][12]"></td><td title="7-C" id="tdr[7][12]"></td><td title="8-C" id="tdr[8][12]"></td><td title="9-C" id="tdr[9][12]"></td><td title="A-C" id="tdr[10][12]"></td><td title="B-C" id="tdr[11][12]"></td><td title="C-C" id="tdr[12][12]"></td><td title="D-C" id="tdr[13][12]"></td><td title="E-C" id="tdr[14][12]"></td><td title="F-C" id="tdr[15][12]"></td></tr><tr><th style="width: 20px; height: 20px;">D</th><td title="0-D" id="tdr[0][13]"></td><td title="1-D" id="tdr[1][13]"></td><td title="2-D" id="tdr[2][13]"></td><td title="3-D" id="tdr[3][13]"></td><td title="4-D" id="tdr[4][13]"></td><td title="5-D" id="tdr[5][13]"></td><td title="6-D" id="tdr[6][13]"></td><td title="7-D" id="tdr[7][13]"></td><td title="8-D" id="tdr[8][13]"></td><td title="9-D" id="tdr[9][13]"></td><td title="A-D" id="tdr[10][13]"></td><td title="B-D" id="tdr[11][13]"></td><td title="C-D" id="tdr[12][13]"></td><td title="D-D" id="tdr[13][13]"></td><td title="E-D" id="tdr[14][13]"></td><td title="F-D" id="tdr[15][13]"></td></tr><tr><th style="width: 20px; height: 20px;">E</th><td title="0-E" id="tdr[0][14]"></td><td title="1-E" id="tdr[1][14]"></td><td title="2-E" id="tdr[2][14]"></td><td title="3-E" id="tdr[3][14]"></td><td title="4-E" id="tdr[4][14]"></td><td title="5-E" id="tdr[5][14]"></td><td title="6-E" id="tdr[6][14]"></td><td title="7-E" id="tdr[7][14]"></td><td title="8-E" id="tdr[8][14]"></td><td title="9-E" id="tdr[9][14]"></td><td title="A-E" id="tdr[10][14]"></td><td title="B-E" id="tdr[11][14]"></td><td title="C-E" id="tdr[12][14]"></td><td title="D-E" id="tdr[13][14]"></td><td title="E-E" id="tdr[14][14]"></td><td title="F-E" id="tdr[15][14]"></td></tr><tr><th style="width: 20px; height: 20px;">F</th><td title="0-F" id="tdr[0][15]"></td><td title="1-F" id="tdr[1][15]"></td><td title="2-F" id="tdr[2][15]"></td><td title="3-F" id="tdr[3][15]"></td><td title="4-F" id="tdr[4][15]"></td><td title="5-F" id="tdr[5][15]"></td><td title="6-F" id="tdr[6][15]"></td><td title="7-F" id="tdr[7][15]"></td><td title="8-F" id="tdr[8][15]"></td><td title="9-F" id="tdr[9][15]"></td><td title="A-F" id="tdr[10][15]"></td><td title="B-F" id="tdr[11][15]"></td><td title="C-F" id="tdr[12][15]"></td><td title="D-F" id="tdr[13][15]"></td><td title="E-F" id="tdr[14][15]"></td><td title="F-F" id="tdr[15][15]"></td></tr>
+                      </table>
+                      <div class="input-group">
+                      <input class="form-control" id="inputNewPrivatKey" placeholder="Set this privat Key (Hex)" type="text" autofocus="">
+                          <span class="input-group-btn">
+                      <button onclick="SetNewPrivatKey();" class="btn btn-info" type="button">Set</button>
+                    </span>
+                      </div>
+                      <div class="input-group">
+                          <button onclick="SetNewPrivatKeyRand();" class="btn btn-info" type="button">Random</button> &nbsp;
+                          <button onclick="setAutoRandom();" id="btAutoRandom" class="btn btn-info" type="button">Start Auto Random</button> &nbsp;
+                          <button onclick="setAutoRandomBin();" id="btAutoRandomBin" class="btn btn-info" type="button">Start Auto Random Bin</button><br>
+                          <button onclick="setAutoRandomOneBit();" id="btAutoRandomOneBit" class="btn btn-info" type="button">Start Auto Random One Bit</button>&nbsp; 
+                          <button onclick="setAutoRandomBinAlgo();" id="btAutoRandomBinAlgo" class="btn btn-info" type="button">Start Auto Rand Bin Algo</button><br>
+                          <input class="form-control" id="addrNotification" placeholder="Options: address for notification founds" type="text" value="" autofocus="">
+                          <input class="form-control" id="lenPrivKeyBits" placeholder="Options: len bits example:64,66,67,68,69" type="text" value="64,66,67,68,69" autofocus="">
+                          <textarea class="form-control" placeholder="For wast search with out blockhain" id="txaFastAddrsSearch" rows="4" spellcheck="false">16jY7qLJnxb7CHZyqBP8qca9d51gAjyXQN
+13zb1hQbWVsc2S7ZTZnP2G4undNNpdh5so
+1BY8GQbnueYofwSuFAT3USAhGjPrkxDdW9
+1MVDYgVaSN6iKKEsbzRUAYFrYJadLYZvvZ
+19vkiEajfhuZ8bs8Zu2jgmC6oqZbWqhxhG</textarea>
+                      </div>
+                      
+                      <h3>Log Founds</h3><br>
+                      If You found somthing, please donate to me :-) Bitcoin: <b><i>1JvB28dD7Gyhe4R9QsJb4tTNCVxhWNq4hF</i></b>
+                      <textarea class="form-control" id="gaBalanceLog" rows="8" spellcheck="false"></textarea>
+                      <script>
+                          document.getElementById('gaBalanceLog').value = get_cookie('FoundAddres');
+                      </script>
+                      <h3>Full Log</h3><br>
+                      <button onclick="setCleanLog();" id="btnAutoClean" class="btn btn-info" type="button">Clean log each run. Current ON.</button>
+                      <textarea class="form-control" id="gaMainLog" rows="8" spellcheck="false"></textarea>
+                  </div>
+                  
+                </div>
+              </td>
+              <td>
+                  <div id="currentProccess"></div>
+                  <hr>
+              Var x+, y+, direct normal
+              <table><tbody>
+                <tr style="display:none"><th style="display:none">Bin:</th><td style="display:none"><input class="form-control" type="text" id="bin[1]" value=""></tr>
+                <tr><th>Hex:</th><td><input class="form-control" type="text" size="64" id="hex[1]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[1][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[1][comp]" value=""></tr>
+                <tr><th>Addr Compress:</th><td><input class="form-control" type="text" id="maddr[1][comp]" value=""></tr>
+                <tr><th>Balance Compress:</th><td><input class="form-control" type="text" id="balance[1][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[1][uncomp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[1][uncomp]" value=""></tr>
+                <tr><th>Addr UnCompress:</th><td><input class="form-control" type="text" id="maddr[1][uncomp]" value=""></tr>
+                <tr><th>Balance Uncompress:</th><td><input class="form-control" type="text" id="balance[1][uncomp]" value=""></tr>
+              </tbody></table>
+              <hr>
+              Var x+, y+, direct revers bin
+              <table><tbody>
+                <tr style="display:none"><th style="display:none">Bin:</th><td style="display:none"><input class="form-control" type="text" id="bin[2]" value=""></tr>
+                <tr><th>Hex:</th><td><input class="form-control" type="text" size="64" id="hex[2]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[2][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[2][comp]" value=""></tr>
+                <tr><th>Addr Compress:</th><td><input class="form-control" type="text" id="maddr[2][comp]" value=""></tr>
+                <tr><th>Balance Compress:</th><td><input class="form-control" type="text" id="balance[2][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[2][uncomp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[2][uncomp]" value=""></tr>
+                <tr><th>Addr UnCompress:</th><td><input class="form-control" type="text" id="maddr[2][uncomp]" value=""></tr>
+                <tr><th>Balance Uncompress:</th><td><input class="form-control" type="text" id="balance[2][uncomp]" value=""></tr>
+              </tbody></table>
+              <hr>
+              Var x+, y+, direct revers hex
+              <table><tbody>
+                <tr style="display:none"><th style="display:none">Bin:</th><td style="display:none"><input class="form-control" type="text" id="bin[3]" value=""></tr>
+                <tr><th>Hex:</th><td><input class="form-control" type="text" size="64" id="hex[3]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[3][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[3][comp]" value=""></tr>
+                <tr><th>Addr Compress:</th><td><input class="form-control" type="text" id="maddr[3][comp]" value=""></tr>
+                <tr><th>Balance Compress:</th><td><input class="form-control" type="text" id="balance[3][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[3][uncomp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[3][uncomp]" value=""></tr>
+                <tr><th>Addr UnCompress:</th><td><input class="form-control" type="text" id="maddr[3][uncomp]" value=""></tr>
+                <tr><th>Balance Uncompress:</th><td><input class="form-control" type="text" id="balance[3][uncomp]" value=""></tr>
+              </tbody></table>  
+              </td>
+              </tr></tbody></table>
+              Var y+, x+, direct normal
+              <table><tbody>
+                <tr style="display:none"><th style="display:none">Bin:</th><td style="display:none"><input class="form-control" type="text" id="bin[4]" value=""></tr>
+                <tr><th>Hex:</th><td><input class="form-control" type="text" size="64" id="hex[4]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[4][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[4][comp]" value=""></tr>
+                <tr><th>Addr Compress:</th><td><input class="form-control" type="text" id="maddr[4][comp]" value=""></tr>
+                <tr><th>Balance Compress:</th><td><input class="form-control" type="text" id="balance[4][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[4][uncomp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[4][uncomp]" value=""></tr>
+                <tr><th>Addr UnCompress:</th><td><input class="form-control" type="text" id="maddr[4][uncomp]" value=""></tr>
+                <tr><th>Balance Uncompress:</th><td><input class="form-control" type="text" id="balance[4][uncomp]" value=""></tr>
+              </tbody></table>
+              <hr>
+              Var y+, x+ direct reverse bin
+              <table><tbody>
+                <tr style="display:none"><th style="display:none">Bin:</th><td style="display:none"><input class="form-control" type="text" id="bin[5]" value=""></tr>
+                <tr><th>Hex:</th><td><input class="form-control" type="text" size="64" id="hex[5]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[5][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[5][comp]" value=""></tr>
+                <tr><th>Addr Compress:</th><td><input class="form-control" type="text" id="maddr[5][comp]" value=""></tr>
+                <tr><th>Balance Compress:</th><td><input class="form-control" type="text" id="balance[5][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[5][uncomp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[5][uncomp]" value=""></tr>
+                <tr><th>Addr UnCompress:</th><td><input class="form-control" type="text" id="maddr[5][uncomp]" value=""></tr>
+                <tr><th>Balance Uncompress:</th><td><input class="form-control" type="text" id="balance[5][uncomp]" value=""></tr>
+              </tbody></table>
+              <hr>
+              Var y+, x+, direct reverse hex
+              <table><tbody>
+                <tr style="display:none"><th style="display:none">Bin:</th><td style="display:none"><input class="form-control" type="text" id="bin[6]" value=""></tr>
+                <tr><th>Hex:</th><td><input class="form-control" type="text" size="64" id="hex[6]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[6][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[6][comp]" value=""></tr>
+                <tr><th>Addr Compress:</th><td><input class="form-control" type="text" id="maddr[6][comp]" value=""></tr>
+                <tr><th>Balance Compress:</th><td><input class="form-control" type="text" id="balance[6][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[6][uncomp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[6][uncomp]" value=""></tr>
+                <tr><th>Addr UnCompress:</th><td><input class="form-control" type="text" id="maddr[6][uncomp]" value=""></tr>
+                <tr><th>Balance Uncompress:</th><td><input class="form-control" type="text" id="balance[6][uncomp]" value=""></tr>
+              </tbody></table>
+              <hr>
+              Var x+, y-, direct normal
+              <table><tbody>
+                <tr style="display:none"><th style="display:none">Bin:</th><td style="display:none"><input class="form-control" type="text" id="bin[7]" value=""></tr>
+                <tr><th>Hex:</th><td><input class="form-control" type="text" size="64" id="hex[7]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[7][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[7][comp]" value=""></tr>
+                <tr><th>Addr Compress:</th><td><input class="form-control" type="text" id="maddr[7][comp]" value=""></tr>
+                <tr><th>Balance Compress:</th><td><input class="form-control" type="text" id="balance[7][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[7][uncomp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[7][uncomp]" value=""></tr>
+                <tr><th>Addr UnCompress:</th><td><input class="form-control" type="text" id="maddr[7][uncomp]" value=""></tr>
+                <tr><th>Balance Uncompress:</th><td><input class="form-control" type="text" id="balance[7][uncomp]" value=""></tr>
+              </tbody></table>
+              <hr>
+                  Var x+, y-, direct revers bin
+              <table><tbody>
+                <tr style="display:none"><th style="display:none">Bin:</th><td style="display:none"><input class="form-control" type="text" id="bin[8]" value=""></tr>
+                <tr><th>Hex:</th><td><input class="form-control" type="text" size="64" id="hex[8]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[8][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[8][comp]" value=""></tr>
+                <tr><th>Addr Compress:</th><td><input class="form-control" type="text" id="maddr[8][comp]" value=""></tr>
+                <tr><th>Balance Compress:</th><td><input class="form-control" type="text" id="balance[8][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[8][uncomp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[8][uncomp]" value=""></tr>
+                <tr><th>Addr UnCompress:</th><td><input class="form-control" type="text" id="maddr[8][uncomp]" value=""></tr>
+                <tr><th>Balance Uncompress:</th><td><input class="form-control" type="text" id="balance[8][uncomp]" value=""></tr>
+              </tbody></table>
+              <hr>
+                  Var x+, y-, direct revers hex
+              <table><tbody>
+                <tr style="display:none"><th style="display:none">Bin:</th><td style="display:none"><input class="form-control" type="text" id="bin[9]" value=""></tr>
+                <tr><th>Hex:</th><td><input class="form-control" type="text" size="64" id="hex[9]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[9][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[9][comp]" value=""></tr>
+                <tr><th>Addr Compress:</th><td><input class="form-control" type="text" id="maddr[9][comp]" value=""></tr>
+                <tr><th>Balance Compress:</th><td><input class="form-control" type="text" id="balance[9][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[9][uncomp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[9][uncomp]" value=""></tr>
+                <tr><th>Addr UnCompress:</th><td><input class="form-control" type="text" id="maddr[9][uncomp]" value=""></tr>
+                <tr><th>Balance Uncompress:</th><td><input class="form-control" type="text" id="balance[9][uncomp]" value=""></tr>
+              </tbody></table>
+              <hr>
+                  Var x-, y+, direct normal
+              <table><tbody>
+                <tr style="display:none"><th style="display:none">Bin:</th><td style="display:none"><input class="form-control" type="text" id="bin[10]" value=""></tr>
+                <tr><th>Hex:</th><td><input class="form-control" type="text" size="64" id="hex[10]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[10][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[10][comp]" value=""></tr>
+                <tr><th>Addr Compress:</th><td><input class="form-control" type="text" id="maddr[10][comp]" value=""></tr>
+                <tr><th>Balance Compress:</th><td><input class="form-control" type="text" id="balance[10][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[10][uncomp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[10][uncomp]" value=""></tr>
+                <tr><th>Addr UnCompress:</th><td><input class="form-control" type="text" id="maddr[10][uncomp]" value=""></tr>
+                <tr><th>Balance Uncompress:</th><td><input class="form-control" type="text" id="balance[10][uncomp]" value=""></tr>
+              </tbody></table>
+              <hr>
+                  Var x-, y+, direct reverse bin
+              <table><tbody>
+                <tr style="display:none"><th style="display:none">Bin:</th><td style="display:none"><input class="form-control" type="text" id="bin[11]" value=""></tr>
+                <tr><th>Hex:</th><td><input class="form-control" type="text" size="64" id="hex[11]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[11][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[11][comp]" value=""></tr>
+                <tr><th>Addr Compress:</th><td><input class="form-control" type="text" id="maddr[11][comp]" value=""></tr>
+                <tr><th>Balance Compress:</th><td><input class="form-control" type="text" id="balance[11][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[11][uncomp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[11][uncomp]" value=""></tr>
+                <tr><th>Addr UnCompress:</th><td><input class="form-control" type="text" id="maddr[11][uncomp]" value=""></tr>
+                <tr><th>Balance Uncompress:</th><td><input class="form-control" type="text" id="balance[11][uncomp]" value=""></tr>
+              </tbody></table>
+              <hr>
+                  Var x-, y+, direct reverse hex
+              <table><tbody>
+                <tr style="display:none"><th style="display:none">Bin:</th><td style="display:none"><input class="form-control" type="text" id="bin[12]" value=""></tr>
+                <tr><th>Hex:</th><td><input class="form-control" type="text" size="64" id="hex[12]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[12][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[12][comp]" value=""></tr>
+                <tr><th>Addr Compress:</th><td><input class="form-control" type="text" id="maddr[12][comp]" value=""></tr>
+                <tr><th>Balance Compress:</th><td><input class="form-control" type="text" id="balance[12][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[12][uncomp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[12][uncomp]" value=""></tr>
+                <tr><th>Addr UnCompress:</th><td><input class="form-control" type="text" id="maddr[12][uncomp]" value=""></tr>
+                <tr><th>Balance Uncompress:</th><td><input class="form-control" type="text" id="balance[12][uncomp]" value=""></tr>
+              </tbody></table>
+              <hr>
+                  Var x-, y-, direct normal
+              <table><tbody>
+                <tr style="display:none"><th style="display:none">Bin:</th><td style="display:none"><input class="form-control" type="text" id="bin[13]" value=""></tr>
+                <tr><th>Hex:</th><td><input class="form-control" type="text" size="64" id="hex[13]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[13][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[13][comp]" value=""></tr>
+                <tr><th>Addr Compress:</th><td><input class="form-control" type="text" id="maddr[13][comp]" value=""></tr>
+                <tr><th>Balance Compress:</th><td><input class="form-control" type="text" id="balance[13][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[13][uncomp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[13][uncomp]" value=""></tr>
+                <tr><th>Addr UnCompress:</th><td><input class="form-control" type="text" id="maddr[13][uncomp]" value=""></tr>
+                <tr><th>Balance Uncompress:</th><td><input class="form-control" type="text" id="balance[13][uncomp]" value=""></tr>
+              </tbody></table>
+              <hr>
+                  Var x-, y-, direct reverse bin
+              <table><tbody>
+                <tr style="display:none"><th style="display:none">Bin:</th><td style="display:none"><input class="form-control" type="text" id="bin[14]" value=""></tr>
+                <tr><th>Hex:</th><td><input class="form-control" type="text" size="64" id="hex[14]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[14][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[14][comp]" value=""></tr>
+                <tr><th>Addr Compress:</th><td><input class="form-control" type="text" id="maddr[14][comp]" value=""></tr>
+                <tr><th>Balance Compress:</th><td><input class="form-control" type="text" id="balance[14][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[14][uncomp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[14][uncomp]" value=""></tr>
+                <tr><th>Addr UnCompress:</th><td><input class="form-control" type="text" id="maddr[14][uncomp]" value=""></tr>
+                <tr><th>Balance Uncompress:</th><td><input class="form-control" type="text" id="balance[14][uncomp]" value=""></tr>
+              </tbody></table>
+              <hr>
+                  Var x-, y-, direct reverse hex
+              <table><tbody>
+                <tr style="display:none"><th style="display:none">Bin:</th><td style="display:none"><input class="form-control" type="text" id="bin[15]" value=""></tr>
+                <tr><th>Hex:</th><td><input class="form-control" type="text" size="64" id="hex[15]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[15][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[15][comp]" value=""></tr>
+                <tr><th>Addr Compress:</th><td><input class="form-control" type="text" id="maddr[15][comp]" value=""></tr>
+                <tr><th>Balance Compress:</th><td><input class="form-control" type="text" id="balance[15][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[15][uncomp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[15][uncomp]" value=""></tr>
+                <tr><th>Addr UnCompress:</th><td><input class="form-control" type="text" id="maddr[15][uncomp]" value=""></tr>
+                <tr><th>Balance Uncompress:</th><td><input class="form-control" type="text" id="balance[15][uncomp]" value=""></tr>
+              </tbody></table>
+              <hr>
+                  Var y-, x+, direct normal
+              <table><tbody>
+                <tr style="display:none"><th style="display:none">Bin:</th><td style="display:none"><input class="form-control" type="text" id="bin[16]" value=""></tr>
+                <tr><th>Hex:</th><td><input class="form-control" type="text" size="64" id="hex[16]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[16][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[16][comp]" value=""></tr>
+                <tr><th>Addr Compress:</th><td><input class="form-control" type="text" id="maddr[16][comp]" value=""></tr>
+                <tr><th>Balance Compress:</th><td><input class="form-control" type="text" id="balance[16][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[16][uncomp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[16][uncomp]" value=""></tr>
+                <tr><th>Addr UnCompress:</th><td><input class="form-control" type="text" id="maddr[16][uncomp]" value=""></tr>
+                <tr><th>Balance Uncompress:</th><td><input class="form-control" type="text" id="balance[16][uncomp]" value=""></tr>
+              </tbody></table>
+              <hr>
+                  Var y-, x+, direct reverse bin
+              <table><tbody>
+                <tr style="display:none"><th style="display:none">Bin:</th><td style="display:none"><input class="form-control" type="text" id="bin[17]" value=""></tr>
+                <tr><th>Hex:</th><td><input class="form-control" type="text" size="64" id="hex[17]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[17][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[17][comp]" value=""></tr>
+                <tr><th>Addr Compress:</th><td><input class="form-control" type="text" id="maddr[17][comp]" value=""></tr>
+                <tr><th>Balance Compress:</th><td><input class="form-control" type="text" id="balance[17][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[17][uncomp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[17][uncomp]" value=""></tr>
+                <tr><th>Addr UnCompress:</th><td><input class="form-control" type="text" id="maddr[17][uncomp]" value=""></tr>
+                <tr><th>Balance Uncompress:</th><td><input class="form-control" type="text" id="balance[17][uncomp]" value=""></tr>
+              </tbody></table>
+              <hr>
+                  Var y-, x+, direct reverse hex
+              <table><tbody>
+                <tr style="display:none"><th style="display:none">Bin:</th><td style="display:none"><input class="form-control" type="text" id="bin[18]" value=""></tr>
+                <tr><th>Hex:</th><td><input class="form-control" type="text" size="64" id="hex[18]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[18][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[18][comp]" value=""></tr>
+                <tr><th>Addr Compress:</th><td><input class="form-control" type="text" id="maddr[18][comp]" value=""></tr>
+                <tr><th>Balance Compress:</th><td><input class="form-control" type="text" id="balance[18][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[18][uncomp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[18][uncomp]" value=""></tr>
+                <tr><th>Addr UnCompress:</th><td><input class="form-control" type="text" id="maddr[18][uncomp]" value=""></tr>
+                <tr><th>Balance Uncompress:</th><td><input class="form-control" type="text" id="balance[18][uncomp]" value=""></tr>
+              </tbody></table>
+              <hr>
+                  Var y+, x-, direct normal
+              <table><tbody>
+                <tr style="display:none"><th style="display:none">Bin:</th><td style="display:none"><input class="form-control" type="text" id="bin[19]" value=""></tr>
+                <tr><th>Hex:</th><td><input class="form-control" type="text" size="64" id="hex[19]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[19][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[19][comp]" value=""></tr>
+                <tr><th>Addr Compress:</th><td><input class="form-control" type="text" id="maddr[19][comp]" value=""></tr>
+                <tr><th>Balance Compress:</th><td><input class="form-control" type="text" id="balance[19][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[19][uncomp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[19][uncomp]" value=""></tr>
+                <tr><th>Addr UnCompress:</th><td><input class="form-control" type="text" id="maddr[19][uncomp]" value=""></tr>
+                <tr><th>Balance Uncompress:</th><td><input class="form-control" type="text" id="balance[19][uncomp]" value=""></tr>
+              </tbody></table>
+              <hr>
+                  Var y+, x-, direct reverse bin
+              <table><tbody>
+                <tr style="display:none"><th style="display:none">Bin:</th><td style="display:none"><input class="form-control" type="text" id="bin[20]" value=""></tr>
+                <tr><th>Hex:</th><td><input class="form-control" type="text" size="64" id="hex[20]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[20][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[20][comp]" value=""></tr>
+                <tr><th>Addr Compress:</th><td><input class="form-control" type="text" id="maddr[20][comp]" value=""></tr>
+                <tr><th>Balance Compress:</th><td><input class="form-control" type="text" id="balance[20][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[20][uncomp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[20][uncomp]" value=""></tr>
+                <tr><th>Addr UnCompress:</th><td><input class="form-control" type="text" id="maddr[20][uncomp]" value=""></tr>
+                <tr><th>Balance Uncompress:</th><td><input class="form-control" type="text" id="balance[20][uncomp]" value=""></tr>
+              </tbody></table>
+              <hr>
+                  Var y+, x-, direct reverse hex
+              <table><tbody>
+                <tr style="display:none"><th style="display:none">Bin:</th><td style="display:none"><input class="form-control" type="text" id="bin[21]" value=""></tr>
+                <tr><th>Hex:</th><td><input class="form-control" type="text" size="64" id="hex[21]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[21][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[21][comp]" value=""></tr>
+                <tr><th>Addr Compress:</th><td><input class="form-control" type="text" id="maddr[21][comp]" value=""></tr>
+                <tr><th>Balance Compress:</th><td><input class="form-control" type="text" id="balance[21][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[21][uncomp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[21][uncomp]" value=""></tr>
+                <tr><th>Addr UnCompress:</th><td><input class="form-control" type="text" id="maddr[21][uncomp]" value=""></tr>
+                <tr><th>Balance Uncompress:</th><td><input class="form-control" type="text" id="balance[21][uncomp]" value=""></tr>
+              </tbody></table>
+              <hr>
+                  Var y-, x-, direct normal
+              <table><tbody>
+                <tr style="display:none"><th style="display:none">Bin:</th><td style="display:none"><input class="form-control" type="text" id="bin[22]" value=""></tr>
+                <tr><th>Hex:</th><td><input class="form-control" type="text" size="64" id="hex[22]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[22][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[22][comp]" value=""></tr>
+                <tr><th>Addr Compress:</th><td><input class="form-control" type="text" id="maddr[22][comp]" value=""></tr>
+                <tr><th>Balance Compress:</th><td><input class="form-control" type="text" id="balance[22][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[22][uncomp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[22][uncomp]" value=""></tr>
+                <tr><th>Addr UnCompress:</th><td><input class="form-control" type="text" id="maddr[22][uncomp]" value=""></tr>
+                <tr><th>Balance Uncompress:</th><td><input class="form-control" type="text" id="balance[22][uncomp]" value=""></tr>
+              </tbody></table>
+              <hr>
+                  Var y-, x-, direct reverse bin
+              <table><tbody>
+                <tr style="display:none"><th style="display:none">Bin:</th><td style="display:none"><input class="form-control" type="text" id="bin[23]" value=""></tr>
+                <tr><th>Hex:</th><td><input class="form-control" type="text" size="64" id="hex[23]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[23][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[23][comp]" value=""></tr>
+                <tr><th>Addr Compress:</th><td><input class="form-control" type="text" id="maddr[23][comp]" value=""></tr>
+                <tr><th>Balance Compress:</th><td><input class="form-control" type="text" id="balance[23][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[23][uncomp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[23][uncomp]" value=""></tr>
+                <tr><th>Addr UnCompress:</th><td><input class="form-control" type="text" id="maddr[23][uncomp]" value=""></tr>
+                <tr><th>Balance Uncompress:</th><td><input class="form-control" type="text" id="balance[23][uncomp]" value=""></tr>
+              </tbody></table>
+              <hr>
+                  Var y-, x-, direct reverse hex
+              <table><tbody>
+                <tr style="display:none"><th style="display:none">Bin:</th><td style="display:none"><input class="form-control" type="text" id="bin[24]" value=""></tr>
+                <tr><th>Hex:</th><td><input class="form-control" type="text" size="64" id="hex[24]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[24][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 Compress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[24][comp]" value=""></tr>
+                <tr><th>Addr Compress:</th><td><input class="form-control" type="text" id="maddr[24][comp]" value=""></tr>
+                <tr><th>Balance Compress:</th><td><input class="form-control" type="text" id="balance[24][comp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">Hash160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mhash160[24][uncomp]" value=""></tr>
+                <tr style="display:none"><th style="display:none">H160 UnCompress:</th><td style="display:none"><input class="form-control" type="text" id="mh160[24][uncomp]" value=""></tr>
+                <tr><th>Addr UnCompress:</th><td><input class="form-control" type="text" id="maddr[24][uncomp]" value=""></tr>
+                <tr><th>Balance Uncompress:</th><td><input class="form-control" type="text" id="balance[24][uncomp]" value=""></tr>
+              </tbody></table>
+              <hr>
+            </fieldset>
+          </form>
+        </div>
+        
+        
+        <hr />
+        <footer>
+          <p>
+            <span class="pull-right"><a href="https://github.com/mrxtraf/brainwalletXX">Forked GitHub Repository</a> | <a href="https://github.com/brainwalletX/brainwalletX.github.io">Original GitHub Repository</a> | <a href="https://github.com/brainwalletX/brainwalletX.github.io/archive/master.zip">Download ZIP</a> | Donations: <a href="bitcoin:1JvB28dD7Gyhe4R9QsJb4tTNCVxhWNq4hF">1JvB28dD7Gyhe4R9QsJb4tTNCVxhWNq4hF</a></span>
+          </p>
+        </footer>
+      </div>
+    </div>
+  </body>
+</html>
